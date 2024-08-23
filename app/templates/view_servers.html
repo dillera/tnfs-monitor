@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}View Servers{% endblock %}
+
+{% block content %}
+<h1>Monitored Servers</h1>
+
+<!-- Countdown Timer -->
+<div id="countdown">
+    <h3>Next page refresh in: <span id="countdown-timer">Loading...</span></h3>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Server Name</th>
+            <th>IP Address</th>
+            <th>Last Checked</th>
+            <th>Time Since Last Check</th>
+            <th>TCP Status</th>
+            <th>UDP Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for server in servers %}
+        <tr>
+            <td>{{ server.name }}</td>
+            <td>{{ server.ip_address }}</td>
+            <td class="last-checked" data-last-checked="{{ server.last_checked or 'Never' }}">{{ server.last_checked or 'Never' }}</td>
+            <td class="time-since-last-check">Calculating...</td>
+            <td class="{{ 'up' if server.tcp_status == 'Up' else 'down' }}">
+                {% if server.tcp_status == 'Up' %}
+                    <i class="fas fa-arrow-up" style="color: green;"></i>
+                {% else %}
+                    <i class="fas fa-arrow-down" style="color: red;"></i>
+                {% endif %}
+            </td>
+            <td class="{{ 'up' if server.udp_status == 'Up' else 'down' }}">
+                {% if server.udp_status == 'Up' %}
+                    <i class="fas fa-arrow-up" style="color: green;"></i>
+                {% else %}
+                    <i class="fas fa-arrow-down" style="color: red;"></i>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    // Function to format a date as MM/DD/YYYY
+    function formatDateUS(dateStr) {
+        const date = new Date(dateStr);
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${month}/${day}/${year}`;
+    }
+
+     function formatDateMMDDYY(dateStr) {
+        const date = new Date(dateStr);
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const year = String(date.getFullYear()).slice(-2); // Get last two digits of the year
+        return `${month}/${day}/${year}`;
+    }
+
+    function updateTimeSinceLastCheck() {
+        const rows = document.querySelectorAll('.last-checked');
+        rows.forEach(row => {
+            const lastChecked = row.getAttribute('data-last-checked');
+            const timeSinceElement = row.parentElement.querySelector('.time-since-last-check');
+            if (lastChecked !== 'Never') {
+                const lastCheckedDate = new Date(lastChecked);
+                const now = new Date();
+                const timeDiff = Math.abs(now - lastCheckedDate);
+                const seconds = Math.floor(timeDiff / 1000);
+
+                // Update the last checked column with formatted date
+                row.textContent = formatDateMMDDYY(lastChecked);
+
+                // Update the time since last check column with seconds ago
+                timeSinceElement.textContent = `${seconds} seconds ago`;
+            } else {
+                row.textContent = 'Never';
+                timeSinceElement.textContent = 'Never';
+            }
+        });
+    }
+ 
+    // Initialize and update the countdown timer
+    // Start countdown timer for the polling period from the server
+    // Start countdown timer for the polling period from the server
+    const pollingPeriod = {{ polling_period }};
+    startCountdown(pollingPeriod);
+
+    function startCountdown(duration) {
+        let timer = duration, minutes, seconds;
+        const countdownElement = document.getElementById('countdown-timer');
+        
+        const countdownInterval = setInterval(function () {
+            minutes = parseInt(timer / 60, 10);
+            seconds = parseInt(timer % 60, 10);
+            
+            minutes = minutes < 10 ? "0" + minutes : minutes;
+            seconds = seconds < 10 ? "0" + seconds : seconds;
+            
+            countdownElement.textContent = minutes + ":" + seconds;
+            
+            if (--timer < 0) {
+                clearInterval(countdownInterval); // Stop the countdown
+                location.reload(); // Refresh the page
+            }
+        }, 1000);
+    }
+
+    // Update the time since last check immediately and then every second
+    updateTimeSinceLastCheck();
+    setInterval(updateTimeSinceLastCheck, 1000);
+
+
+</script>
+
+{% endblock %}

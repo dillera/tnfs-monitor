@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Manage Servers{% endblock %}
+
+{% block content %}
+<h1>Manage Servers</h1>
+
+<a href="{{ url_for('main.add_server') }}" class="btn btn-primary">Add Server</a>
+<table>
+    <thead>
+        <tr>
+            <th>Server Name</th>
+            <th>IP Address</th>
+            <th>Last Checked</th>
+            <th>Time Since Last Check</th>
+            <th>TCP Status</th>
+            <th>UDP Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for server in servers %}
+        <tr>
+            <td>{{ server.name }}</td>
+            <td>{{ server.ip_address }}</td>
+            <td class="last-checked" data-last-checked="{{ server.last_checked or 'Never' }}">{{ server.last_checked or 'Never' }}</td>
+            <td class="time-since-last-check">Calculating...</td>
+            <td class="{{ 'up' if server.tcp_status == 'Up' else 'down' }}">{{ server.tcp_status }}</td>
+            <td class="{{ 'up' if server.udp_status == 'Up' else 'down' }}">{{ server.udp_status }}</td>
+            <td>
+                <a href="{{ url_for('main.edit_server', id=server.id) }}">Edit</a> | 
+                <a href="{{ url_for('main.delete_server', id=server.id) }}">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Polling Period Configuration -->
+<h2>Polling Period</h2>
+<span>Current value: {{ config.polling_period }} seconds</span>
+  <br>
+<form action="{{ url_for('main.update_polling_period') }}" method="POST">
+    <label for="polling_period">Polling Period (in seconds):</label>
+    <input type="number" id="polling_period" name="polling_period" value="{{ config.polling_period }}" required>
+    
+    <br>
+    <button type="submit" class="btn btn-primary">Update</button>
+</form>
+
+
+<script>
+    function updateTimeSinceLastCheck() {
+        const rows = document.querySelectorAll('.last-checked');
+        rows.forEach(row => {
+            const lastChecked = row.getAttribute('data-last-checked');
+            const timeSinceElement = row.parentElement.querySelector('.time-since-last-check');
+            if (lastChecked !== 'Never') {
+                const lastCheckedDate = new Date(lastChecked);
+                const now = new Date();
+                const timeDiff = Math.abs(now - lastCheckedDate);
+                const minutes = Math.floor(timeDiff / (1000 * 60));
+                const hours = Math.floor(minutes / 60);
+                const remainingMinutes = minutes % 60;
+                timeSinceElement.textContent = `${hours} hours, ${remainingMinutes} minutes ago`;
+            } else {
+                timeSinceElement.textContent = 'Never';
+            }
+        });
+    }
+
+    // Run the function to update the times
+    updateTimeSinceLastCheck();
+
+    // Optionally, you can update the times every minute
+    setInterval(updateTimeSinceLastCheck, 60000);
+</script>
+
+{% endblock %}

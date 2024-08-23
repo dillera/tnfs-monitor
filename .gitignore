@@ -1,0 +1,33 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtual environments
+venv/
+
+# Flask specific
+instance/
+.webassets-cache
+
+# Flask-Migrate migrations
+migrations/
+
+# Environment variables
+.env
+
+# macOS specific
+.DS_Store
+
+# Pytest
+.pytest_cache/
+
+# IDEs and text editors
+.vscode/
+.idea/
+*.swp
+
+*.log
